@@ -17,7 +17,8 @@
     "singleton",
     "process",
     "single",
-    "instance"
+    "instance",
+    "mongodb"
   ],
   "author": "twistedstream",
   "license": "MIT",
