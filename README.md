@@ -10,6 +10,8 @@ npm install singleton-process
 
 ## Usage
 
+Here's the basic usage:
+
 ```js
 var singletonProcess = require('singleton-process');
 
@@ -41,6 +43,33 @@ singleton.on('released', function () {
 singleton.lock();
 ```
 
+To ensure that your singleton instance releases its lock when an error occurs, use a Node.js [domain](http://nodejs.org/api/domain.html):
+```js
+var singletonProcess = require('singleton-process');
+var domain = require('domain');
+
+var sinlgeton = null;
+
+var d = domain.create();
+d.on('error', function (err) {
+    // release the singleton lock if an error occurs
+    if (singleton) {
+        singleton.release();
+    }
+});
+
+d.run(function() {
+    // create the singleton inside the domain so that the 'error' event gets handled by the domain as well
+    sinlgeton = new singletonProcess.Singleton(...);
+
+    // singleton event handlers
+    ...
+
+    // perform the lock
+	singleton.lock();
+});
+```
+
 ## Singleton Methods
 
 * `lock()`  
@@ -51,23 +80,23 @@ Attempts to release an existing singleton lock.  Handle the `releasing`, `releas
 Determines if a named singleton instance currently exists.  
 **Arguments**:
     * `callback(err, exists)`: A callback to invoke when the exist check is complete.  
-    ** Arguments**:
+    **Arguments**:
         * `err`: An error occurred while performing the check.
         * `exists`: `true` if the singleton exists; otherwise `false`.
 
 ## Singleton Events
 
-* `locking`  
+* `'locking'`  
 The `lock` method has been called and an attempt will now be made to aquire the lock.
-* `locked`  
+* `'locked'`  
 A lock has been successfully obtained.
-* `conflict`  
+* `'conflict'`  
 The lock was not successful because another singleton currently has the lock.
-* `releasing`
+* `'releasing'`
   The `release` method has been called and an attempt will now be made to release the existing singleton lock.
-* `released`  
+* `'released'`  
 The lock release was successful.
-* `error`  
+* `'error'`  
 An error has occurred during locking or releasing of the singleton.
 
 All events (except `error`) return a `message` parameter that can be used for logging.  The `error` event returns the standard `err` object.
