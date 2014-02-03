@@ -47,6 +47,13 @@ singleton.lock();
 Attempts to obtain a lock for the named singleton instance.  Handle the `locking`, `conflict`, `locked`, and `error` [events](#singleton-events) for asynchronous feedback from this call.
 * `release()`  
 Attempts to release an existing singleton lock.  Handle the `releasing`, `released`, and `error` [events](#singleton-events) for asynchronous feedback from this call.
+* `exists(callback)`  
+Determines if a named singleton instance currently exists.  
+**Arguments**:
+    * `callback(err, exists)`: A callback to invoke when the exist check is complete.  
+    ** Arguments**:
+        * `err`: An error occurred while performing the check.
+        * `exists`: `true` if the singleton exists; otherwise `false`.
 
 ## Singleton Events
 
@@ -91,3 +98,11 @@ Atomically remove an existing lock.
     * `callback(err)`: A callback to invoke when the lock removal is complete.  
     **Arguments**:
         * `err`: An error object if an error occurs during lock removal.
+* Method: `lockExists(name, callback)`  
+Queries the data store to check for the existance of a lock.  
+**Arguments**:
+    * `name`: The name of the lock to check.
+    * `callback(err, exists)`: A callback to invoke when the check is complete.  
+    **Arguments**:
+        * `err`: An error object if an error occurs during the check.
+        * `exists`: `true` if the lock exists; otherwise `false`.
