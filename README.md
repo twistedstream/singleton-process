@@ -44,6 +44,7 @@ singleton.lock();
 ```
 
 To ensure that your singleton instance releases its lock when an error occurs, use a Node.js [domain](http://nodejs.org/api/domain.html):
+
 ```js
 var singletonProcess = require('singleton-process');
 var domain = require('domain');
@@ -70,6 +71,20 @@ d.run(function() {
 });
 ```
 
+## Options
+
+The `Singleton` constructor also takes an options parameter:
+
+```js
+var options = { lockExpireSeconds: 300 };
+var singleton = new singletonProcess.Singleton(name, persister, options);
+```
+
+which currently supports the following attributes:
+
+* `lockExpireSeconds`  
+    All locks created by the `Singleton` instance will expire after the specified number of seconds so that lock creation attempts will automatically delete expired locks before creating new ones.  When an expired lock is deleted, the `expired` [event](#singleton-events) occcurs.
+
 ## Singleton Methods
 
 * `lock()`  
@@ -92,8 +107,10 @@ The `lock` method has been called and an attempt will now be made to aquire the 
 A lock has been successfully obtained.
 * `'conflict'`  
 The lock was not successful because another singleton currently has the lock.
+* `'expired'`  
+An expired lock was deleted, which will allow a new lock to be created.
 * `'releasing'`
-  The `release` method has been called and an attempt will now be made to release the existing singleton lock.
+The `release` method has been called and an attempt will now be made to release the existing singleton lock.
 * `'released'`  
 The lock release was successful.
 * `'error'`  
