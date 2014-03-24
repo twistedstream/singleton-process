@@ -1,5 +1,6 @@
 "use strict";
 
+require('mocha');
 var should = require('chai').should();
 var singletonProcess = require('../lib/index');
 var moment = require('moment');
@@ -92,7 +93,125 @@ describe("Singleton class", function () {
             singleton.lock();
         });
 
-        //TODO: test expired lock scenarios
+        it("should fire 'locking', 'expired', and 'locked' events when an expired lock exists", function (done) {
+            var persister = {
+                persistLock: function (name, callback) {
+                    return callback(null, false, moment().subtract(1, 'hour'));
+                },
+                deleteLock: function (name, callback) {
+                    return callback();
+                }
+            };
+
+            var singleton = new singletonProcess.Singleton('foo', persister, { lockExpireSeconds: 300});
+
+            var events = '';
+            singleton.on('locking', function () {
+                events += 'locking';
+            });
+            singleton.on('expired', function () {
+
+                events += 'expired';
+
+                persister.persistLock = function (name, callback) {
+                    return callback(null, true);
+                };
+            });
+            singleton.on('locked', function () {
+                events += 'locked';
+
+                events.should.equal('lockingexpiredlocked');
+                done();
+            });
+
+            singleton.lock();
+        });
+
+        it("should fire 'locking' and 'conflict' events when a non-expired lock already exists", function (done) {
+            var persister = {
+                persistLock: function (name, callback) {
+                    return callback(null, false, moment().add(1, 'hour'));
+                }
+            };
+
+            var singleton = new singletonProcess.Singleton('foo', persister, { lockExpireSeconds: 300});
+
+            var events = '';
+            singleton.on('locking', function () {
+                events += 'locking';
+            });
+            singleton.on('conflict', function () {
+                events += 'conflict';
+
+                events.should.equal('lockingconflict');
+                done();
+            });
+
+            singleton.lock();
+        });
+
+        it("should fire 'locking', 'expired', and 'conflict' events when an expired lock exists and a new lock is attempted but failed", function (done) {
+            var persister = {
+                persistLock: function (name, callback) {
+                    return callback(null, false, moment().subtract(1, 'hour'));
+                },
+                deleteLock: function (name, callback) {
+                    return callback();
+                }
+            };
+
+            var singleton = new singletonProcess.Singleton('foo', persister, { lockExpireSeconds: 300});
+
+            var events = '';
+            singleton.on('locking', function () {
+                events += 'locking';
+            });
+            singleton.on('expired', function () {
+
+                events += 'expired';
+
+                persister.persistLock = function (name, callback) {
+                    return callback(null, false, moment().add(1, 'hour'));
+                };
+            });
+            singleton.on('conflict', function () {
+                events += 'conflict';
+
+                events.should.equal('lockingexpiredconflict');
+                done();
+            });
+
+            singleton.lock();
+        });
+
+        it("should fire 'locking', 'expired', and 'error' events when an expired lock exists and a new lock is attempted but persister failed", function (done) {
+            var persister = {
+                persistLock: function (name, callback) {
+                    return callback(null, false, moment().subtract(1, 'hour'));
+                },
+                deleteLock: function (name, callback) {
+                    return callback();
+                }
+            };
+
+            var singleton = new singletonProcess.Singleton('foo', persister, { lockExpireSeconds: 300});
+
+            var events = '';
+            singleton.on('locking', function () {
+                events += 'locking';
+            });
+            singleton.on('expired', function () {
+
+                events += 'expired';
+
+                persister.persistLock = function (name, callback) {
+                    return callback(new Error("breaking bad"));
+                };
+            });
+
+            singleton.lock();
+        });
+
     });
 
     describe("'release' method", function () {
@@ -169,7 +288,7 @@ describe("Singleton class", function () {
             var singleton = new singletonProcess.Singleton('foo', persister);
 
             singleton.exists(function (err, exists) {
-                exists.should.be.true;
+                exists.should.equal(true);
                 done();
             });
         });
@@ -184,7 +303,7 @@ describe("Singleton class", function () {
             var singleton = new singletonProcess.Singleton('foo', persister);
 
             singleton.exists(function (err, exists) {
-                exists.should.be.false;
+                exists.should.equal(false);
                 done();
             });
         });
