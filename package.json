@@ -1,32 +1,38 @@
 {
-  "name": "singleton-process",
-  "version": "0.4.0",
-  "engines": {
-    "node": "0.10.24"
-  },
-  "description": "Enforce a single instance of a node.js process across multiple hosts",
-  "main": "./lib/index.js",
-  "scripts": {
-    "test": "make test"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/twistedstream/singleton-process.git"
-  },
-  "keywords": [
-    "singleton",
-    "process",
-    "single",
-    "instance",
-    "mongodb"
-  ],
-  "author": "twistedstream",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/twistedstream/singleton-process/issues"
-  },
-  "homepage": "https://github.com/twistedstream/singleton-process",
-  "dependencies": {
-    "mongodb": "~1.3.23"
-  }
+    "name": "singleton-process",
+    "version": "0.4.0",
+    "engines": {
+        "node": "0.10.24"
+    },
+    "description": "Enforce a single instance of a node.js process across multiple hosts",
+    "main": "./lib/index.js",
+    "scripts": {
+        "test": "make test"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/twistedstream/singleton-process.git"
+    },
+    "keywords": [
+        "singleton",
+        "process",
+        "single",
+        "instance",
+        "mongodb"
+    ],
+    "author": "twistedstream",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/twistedstream/singleton-process/issues"
+    },
+    "homepage": "https://github.com/twistedstream/singleton-process",
+    "dependencies": {
+        "mongodb": "~1.3.23",
+        "moment": "^2.5.1"
+    },
+    "devDependencies": {
+        "jshint": "^2.4.4",
+        "chai": "^1.9.1",
+        "mocha": "^1.18.2"
+    }
 }
