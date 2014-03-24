@@ -208,6 +208,13 @@ describe("Singleton class", function () {
                     return callback(new Error("breaking bad"));
                 };
             });
+            singleton.on('error', function (err) {
+                events += 'err';
+
+                events.should.equal('lockingexpirederr');
+                err.message.should.equal("breaking bad");
+                done();
+            });
 
             singleton.lock();
         });
