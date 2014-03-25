@@ -2,6 +2,8 @@
 
 Enforce a single instance of a node.js process across multiple hosts.
 
+[![Build Status](https://travis-ci.org/twistedstream/singleton-process.svg?branch=master)](https://travis-ci.org/twistedstream/singleton-process)
+
 ## Installation
 
 ```bash
