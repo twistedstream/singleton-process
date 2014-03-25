@@ -285,94 +285,83 @@ describe("Singleton class", function () {
     });
 
     describe("'exists' method", function () {
-        it("should invoke callback with true if lock exists", function (done) {
+        describe("when a lock exists:", function() {
             var persister = {
                 lockExists: function (name, callback) {
                     return callback(null, true);
                 }
             };
 
-            var singleton = new singletonProcess.Singleton('foo', persister);
+            it("should invoke the callback with true", function (done) {
 
-            singleton.exists(function (err, exists) {
-                exists.should.equal(true);
-                done();
+                var singleton = new singletonProcess.Singleton('foo', persister);
+
+                singleton.exists(function (err, exists) {
+                    exists.should.equal(true);
+                    done();
+                });
+            });
+
+            it("should return a fulfilled promise with true", function (done) {
+                var singleton = new singletonProcess.Singleton('foo', persister);
+
+                singleton.exists().then(function(exists) {
+                    exists.should.equal(true);
+                    done();
+                });
             });
         });
 
-        it("should invoke callback with false if lock does not exist", function (done) {
+        describe("when a lock doesn't exist:", function() {
             var persister = {
                 lockExists: function (name, callback) {
                     return callback(null, false);
                 }
             };
 
-            var singleton = new singletonProcess.Singleton('foo', persister);
+            it("should invoke the callback with false", function (done) {
+                var singleton = new singletonProcess.Singleton('foo', persister);
 
-            singleton.exists(function (err, exists) {
-                exists.should.equal(false);
-                done();
+                singleton.exists(function (err, exists) {
+                    exists.should.equal(false);
+                    done();
+                });
+            });
+
+            it("should return a fulfilled promise with false", function (done) {
+                var singleton = new singletonProcess.Singleton('foo', persister);
+
+                singleton.exists().then(function(exists) {
+                    exists.should.equal(false);
+                    done();
+                });
             });
         });
 
-        it("should invoke callback with error if persister gave us an error", function (done) {
+        describe("when the lock check results in an error:", function() {
             var persister = {
                 lockExists: function (name, callback) {
                     return callback(new Error("broken bad"));
                 }
             };
 
-            var singleton = new singletonProcess.Singleton('foo', persister);
+            it("should invoke the callback with the error ", function (done) {
+                var singleton = new singletonProcess.Singleton('foo', persister);
 
-            singleton.exists(function (err, exists) {
-                err.message.should.equal("broken bad");
-                done();
+                singleton.exists(function (err, exists) {
+                    err.message.should.equal("broken bad");
+                    done();
+                });
             });
-        });
 
-        it("should return a true promise if lock exists", function (done) {
-            var persister = {
-                lockExists: function (name, callback) {
-                    return callback(null, true);
-                }
-            };
+            it("should return a rejected promise", function (done) {
+                var singleton = new singletonProcess.Singleton('foo', persister);
 
-            var singleton = new singletonProcess.Singleton('foo', persister);
-
-            singleton.exists().then(function(exists) {
-                exists.should.equal(true);
-                done();
+                singleton.exists().then(null, function (err) {
+                    err.message.should.equal("broken bad");
+                    done();
+                });
             });
-        });
-
-        it("should return a false promise if lock doesn not exist", function (done) {
-            var persister = {
-                lockExists: function (name, callback) {
-                    return callback(null, false);
-                }
-            };
-
-            var singleton = new singletonProcess.Singleton('foo', persister);
-
-            singleton.exists().then(function(exists) {
-                exists.should.equal(false);
-                done();
-            });
-        });
-
-        it("should return a error promise if persister gave us an error", function (done) {
-            var persister = {
-                lockExists: function (name, callback) {
-                    return callback(new Error("broken bad"));
-                }
-            };
-
-            var singleton = new singletonProcess.Singleton('foo', persister);
-
-            singleton.exists().then(null, function (err) {
-                err.message.should.equal("broken bad");
-                done();
-            });
-        });
+        });        
     });
 });
