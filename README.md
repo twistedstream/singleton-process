@@ -6,9 +6,7 @@ Enforce a single instance of a node.js process across multiple hosts.
 
 ## Installation
 
-```bash
-npm install singleton-process
-```
+[![NPM](https://nodei.co/npm/singleton-process.png?downloads=true)](https://nodei.co/npm/singleton-process/)
 
 ## Usage
 
