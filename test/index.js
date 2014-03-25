@@ -5,7 +5,7 @@ var should = require('chai').should();
 var singletonProcess = require('../lib/index');
 var moment = require('moment');
 
-describe("Singleton class", function () {
+describe("Singleton", function () {
     describe("constructor", function () {
         it("should require name parameter", function (done) {
             (function () {
@@ -22,7 +22,7 @@ describe("Singleton class", function () {
         });
     });
 
-    describe("'lock' method", function () {
+    describe("#lock method", function () {
         it("should fire 'locking' and 'locked' events when no lock exists", function (done) {
             var persister = {
                 persistLock: function (name, callback) {
@@ -221,7 +221,7 @@ describe("Singleton class", function () {
 
     });
 
-    describe("'release' method", function () {
+    describe("#release method", function () {
         it("should fire 'releasing' and 'released' events", function (done) {
             var persister = {
                 persistLock: function (name, callback) {
@@ -284,7 +284,7 @@ describe("Singleton class", function () {
         });
     });
 
-    describe("'exists' method", function () {
+    describe("#exists method", function () {
         describe("when a lock exists:", function() {
             var persister = {
                 lockExists: function (name, callback) {
