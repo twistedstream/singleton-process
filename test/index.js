@@ -330,5 +330,49 @@ describe("Singleton class", function () {
             });
         });
 
+        it("should return a true promise if lock exists", function (done) {
+            var persister = {
+                lockExists: function (name, callback) {
+                    return callback(null, true);
+                }
+            };
+
+            var singleton = new singletonProcess.Singleton('foo', persister);
+
+            singleton.exists().then(function(exists) {
+                exists.should.equal(true);
+                done();
+            });
+        });
+
+        it("should return a false promise if lock doesn not exist", function (done) {
+            var persister = {
+                lockExists: function (name, callback) {
+                    return callback(null, false);
+                }
+            };
+
+            var singleton = new singletonProcess.Singleton('foo', persister);
+
+            singleton.exists().then(function(exists) {
+                exists.should.equal(false);
+                done();
+            });
+        });
+
+        it("should return a error promise if persister gave us an error", function (done) {
+            var persister = {
+                lockExists: function (name, callback) {
+                    return callback(new Error("broken bad"));
+                }
+            };
+
+            var singleton = new singletonProcess.Singleton('foo', persister);
+
+            singleton.exists().then(null, function (err) {
+                err.message.should.equal("broken bad");
+                done();
+            });
+        });
     });
 });
