@@ -24,14 +24,16 @@ describe("Singleton", function () {
 
     describe("#lock method", function () {
         describe("when no lock exists:", function () {
-            var persister = {
-                persistLock: function (name, callback) {
-                    return callback(null, true);
-                }
+            var singletonFactory = function() {
+                return new singletonProcess.Singleton('foo', {
+                    persistLock: function (name, callback) {
+                        return callback(null, true);
+                    }
+                });
             };
 
             it("should fire 'locking' and 'locked' events", function (done) {
-                var singleton = new singletonProcess.Singleton('foo', persister);
+                var singleton = singletonFactory();
 
                 var events = '';
                 singleton.on('locking', function () {
@@ -46,17 +48,37 @@ describe("Singleton", function () {
 
                 singleton.lock();
             });
+
+            it("should invoke the callback with true", function (done) {
+                var singleton = singletonFactory();
+
+                singleton.lock(function (err, success) {
+                    success.should.equal(true);
+                    done();
+                });
+            });
+
+            it("should return a fulfilled promise with true", function (done) {
+                var singleton = singletonFactory();
+
+                singleton.lock().then(function (success) {
+                    success.should.equal(true);
+                    done();
+                });
+            });
         });
 
         describe("when a lock already exists:", function () {
-            var persister = {
-                persistLock: function (name, callback) {
-                    return callback(null, false, moment());
-                }
+            var singletonFactory = function() {
+                return new singletonProcess.Singleton('foo', {
+                    persistLock: function (name, callback) {
+                        return callback(null, false, moment());
+                    }
+                });
             };
 
             it("should fire 'locking' and 'conflict' events", function (done) {
-                var singleton = new singletonProcess.Singleton('foo', persister);
+                var singleton = singletonFactory();
 
                 var events = '';
                 singleton.on('locking', function () {
@@ -71,17 +93,37 @@ describe("Singleton", function () {
 
                 singleton.lock();
             });
+
+            it("should invoke the callback with false", function (done) {
+                var singleton = singletonFactory();
+
+                singleton.lock(function (err, success) {
+                    success.should.equal(false);
+                    done();
+                });
+            });
+
+            it("should return a fulfilled promise with false", function (done) {
+                var singleton = singletonFactory();
+
+                singleton.lock().then(function (success) {
+                    success.should.equal(false);
+                    done();
+                });
+            });
         });
 
         describe("when an error occurs while attempting a lock:", function () {
-            var persister = {
-                persistLock: function (name, callback) {
-                    return callback(new Error("bad stuff"));
-                }
+            var singletonFactory = function() {
+                return new singletonProcess.Singleton('foo', {
+                    persistLock: function (name, callback) {
+                        return callback(new Error("bad stuff"));
+                    }
+                });
             };
 
             it("should fire 'locking' and 'error' events", function (done) {
-                var singleton = new singletonProcess.Singleton('foo', persister);
+                var singleton = singletonFactory();
 
                 var events = '';
                 singleton.on('locking', function () {
@@ -97,32 +139,56 @@ describe("Singleton", function () {
 
                 singleton.lock();
             });
+
+            it("should invoke the callback with the error", function (done) {
+                var singleton = singletonFactory();
+
+                singleton.lock(function (err, success) {
+                    err.message.should.equal("bad stuff");
+                    done();
+                });
+            });
+
+            it("should return a rejected promise", function (done) {
+                var singleton = singletonFactory();
+
+                singleton.lock().then(null, function (err) {
+                    err.message.should.equal("bad stuff");
+                    done();
+                });
+            });
         });
 
         describe("when an expired lock exists:", function () {
-            var persister = {
-                persistLock: function (name, callback) {
-                    return callback(null, false, moment().subtract(1, 'hour'));
-                },
-                deleteLock: function (name, callback) {
-                    return callback();
-                }
+            var singletonFactory = function() {
+                var persister = {
+                    persistLock: function (name, callback) {
+                        return callback(null, false, moment().subtract(1, 'hour'));
+                    },
+                    deleteLock: function (name, callback) {
+                        return callback();
+                    }
+                };
+
+                var singleton = new singletonProcess.Singleton('foo', persister, { lockExpireSeconds: 300});
+                singleton.on('expired', function () {
+                    persister.persistLock = function (name, callback) {
+                        return callback(null, true);
+                    };
+                });
+
+                return singleton;                                
             };
 
             it("should fire 'locking', 'expired', and 'locked' events", function (done) {
-                var singleton = new singletonProcess.Singleton('foo', persister, { lockExpireSeconds: 300});
+                var singleton = singletonFactory();
 
                 var events = '';
                 singleton.on('locking', function () {
                     events += 'locking';
                 });
                 singleton.on('expired', function () {
-
                     events += 'expired';
-
-                    persister.persistLock = function (name, callback) {
-                        return callback(null, true);
-                    };
                 });
                 singleton.on('locked', function () {
                     events += 'locked';
@@ -133,17 +199,38 @@ describe("Singleton", function () {
 
                 singleton.lock();
             });
+
+            it("should invoke the callback with true", function (done) {
+                var singleton = singletonFactory();
+
+                singleton.lock(function (err, success) {
+                    success.should.equal(true);
+                    done();
+                });
+            });
+
+            it("should return a fulfilled promise with true", function (done) {
+                var singleton = singletonFactory();
+
+                singleton.lock().then(function (success) {
+                    success.should.equal(true);
+                    done();
+                });
+            });
         });
 
         describe("when a non-expired lock already exists:", function () {
-            var persister = {
-                persistLock: function (name, callback) {
-                    return callback(null, false, moment().add(1, 'hour'));
-                }
+            var singletonFactory = function() {
+                return new singletonProcess.Singleton('foo', {
+                    persistLock: function (name, callback) {
+                        return callback(null, false, moment().add(1, 'hour'));
+                    }
+                }, 
+                { lockExpireSeconds: 300});
             };
 
             it("should fire 'locking' and 'conflict' events", function (done) {
-                var singleton = new singletonProcess.Singleton('foo', persister, { lockExpireSeconds: 300});
+                var singleton = singletonFactory();
 
                 var events = '';
                 singleton.on('locking', function () {
@@ -158,32 +245,56 @@ describe("Singleton", function () {
 
                 singleton.lock();
             });
+
+            it("should invoke the callback with false", function (done) {
+                var singleton = singletonFactory();
+
+                singleton.lock(function (err, success) {
+                    success.should.equal(false);
+                    done();
+                });
+            });
+
+            it("should return a fulfilled promise with false", function (done) {
+                var singleton = singletonFactory();
+
+                singleton.lock().then(function (success) {
+                    success.should.equal(false);
+                    done();
+                });
+            });
         });
 
         describe("when an expired lock exists and a new lock is attempted but fails:", function () {
-            var persister = {
-                persistLock: function (name, callback) {
-                    return callback(null, false, moment().subtract(1, 'hour'));
-                },
-                deleteLock: function (name, callback) {
-                    return callback();
-                }
+            var singletonFactory = function() {
+                var persister = {
+                    persistLock: function (name, callback) {
+                        return callback(null, false, moment().subtract(1, 'hour'));
+                    },
+                    deleteLock: function (name, callback) {
+                        return callback();
+                    }
+                };
+
+                var singleton = new singletonProcess.Singleton('foo', persister, { lockExpireSeconds: 300});
+                singleton.on('expired', function () {
+                    persister.persistLock = function (name, callback) {
+                        return callback(null, false, moment().add(1, 'hour'));
+                    };
+                });
+
+                return singleton;                                
             };
 
             it("should fire 'locking', 'expired', and 'conflict' events", function (done) {
-                var singleton = new singletonProcess.Singleton('foo', persister, { lockExpireSeconds: 300});
+                var singleton = singletonFactory();
 
                 var events = '';
                 singleton.on('locking', function () {
                     events += 'locking';
                 });
                 singleton.on('expired', function () {
-
                     events += 'expired';
-
-                    persister.persistLock = function (name, callback) {
-                        return callback(null, false, moment().add(1, 'hour'));
-                    };
                 });
                 singleton.on('conflict', function () {
                     events += 'conflict';
@@ -194,32 +305,56 @@ describe("Singleton", function () {
 
                 singleton.lock();
             });
+
+            it("should invoke the callback with false", function (done) {
+                var singleton = singletonFactory();
+
+                singleton.lock(function (err, success) {
+                    success.should.equal(false);
+                    done();
+                });
+            });
+
+            it("should return a fulfilled promise with false", function (done) {
+                var singleton = singletonFactory();
+
+                singleton.lock().then(function (success) {
+                    success.should.equal(false);
+                    done();
+                });
+            });
         });
 
         describe("when an expired lock exists and a new lock is attempted but the persister has an error:", function () {
-            var persister = {
-                persistLock: function (name, callback) {
-                    return callback(null, false, moment().subtract(1, 'hour'));
-                },
-                deleteLock: function (name, callback) {
-                    return callback();
-                }
+            var singletonFactory = function() {
+                var persister = {
+                    persistLock: function (name, callback) {
+                        return callback(null, false, moment().subtract(1, 'hour'));
+                    },
+                    deleteLock: function (name, callback) {
+                        return callback();
+                    }
+                };
+
+                var singleton = new singletonProcess.Singleton('foo', persister, { lockExpireSeconds: 300});
+                singleton.on('expired', function () {
+                    persister.persistLock = function (name, callback) {
+                        return callback(new Error("breaking bad"));
+                    };
+                });
+
+                return singleton;                                
             };
 
             it("should fire 'locking', 'expired', and 'error' events", function (done) {
-                var singleton = new singletonProcess.Singleton('foo', persister, { lockExpireSeconds: 300});
+                var singleton = singletonFactory();
 
                 var events = '';
                 singleton.on('locking', function () {
                     events += 'locking';
                 });
                 singleton.on('expired', function () {
-
                     events += 'expired';
-
-                    persister.persistLock = function (name, callback) {
-                        return callback(new Error("breaking bad"));
-                    };
                 });
                 singleton.on('error', function (err) {
                     events += 'err';
@@ -231,6 +366,24 @@ describe("Singleton", function () {
 
                 singleton.lock();
             });
+
+            it("should invoke the callback with the error", function (done) {
+                var singleton = singletonFactory();
+
+                singleton.lock(function (err, success) {
+                    err.message.should.equal("breaking bad");
+                    done();
+                });
+            });
+
+            it("should return a rejected promise", function (done) {
+                var singleton = singletonFactory();
+
+                singleton.lock().then(null, function (err) {
+                    err.message.should.equal("breaking bad");
+                    done();
+                });
+            });        
         });
     });
 
