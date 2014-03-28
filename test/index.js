@@ -6,6 +6,12 @@ var singletonProcess = require('../lib/index');
 var moment = require('moment');
 
 describe("Singleton", function () {
+    afterEach(function (done) {
+        // remove process SIGTERM listeners since each test creates one and we'll end up exceeding the limit
+        process.removeAllListeners('SIGTERM');
+        done();
+    });
+
     describe("constructor", function () {
         it("should require name parameter", function (done) {
             (function () {
@@ -388,24 +394,19 @@ describe("Singleton", function () {
     });
 
     describe("#release method", function () {
-        describe("when a lock exists:", function() {
-            var persister = {
-                persistLock: function (name, callback) {
-                    return callback(null, true);
-                },
-                deleteLock: function (name, callback) {
-                    return callback(null, true);
-                }
+        describe("when no error occurs while deleting a lock:", function() {
+            var singletonFactory = function() {
+                return new singletonProcess.Singleton('foo', {
+                    deleteLock: function (name, callback) {
+                        return callback(null, true);
+                    }
+                });
             };
 
             it("should fire 'releasing' and 'released' events", function (done) {
-                var singleton = new singletonProcess.Singleton('foo', persister);
+                var singleton = singletonFactory();
 
                 var events = '';
-
-                singleton.on('locked', function () {
-                    singleton.release();
-                });
                 singleton.on('releasing', function () {
                     events += 'releasing';
                 });
@@ -416,32 +417,40 @@ describe("Singleton", function () {
                     done();
                 });
 
-                singleton.lock();
+                singleton.release();
+            });
+
+            it("should invoke the callback", function (done) {
+                var singleton = singletonFactory();
+
+                singleton.release(function (err) {
+                    done();
+                });                      
+            });
+
+            it("should return a fulfilled promise with null", function (done) {
+                var singleton = singletonFactory();
+
+                singleton.release().then(function (value) {
+                    should.not.exist(value);
+                    done();
+                });
             });
         });
 
-        describe("when a lock doesn't exist:", function() { 
-            //TODO: write tests
-        });
-
         describe("when an error occurs while deleting a lock:", function () {
-            var persister = {
-                persistLock: function (name, callback) {
-                    return callback(null, true);
-                },
-                deleteLock: function (name, callback) {
-                    return callback(new Error("broken bad"));
-                }
+            var singletonFactory = function() {
+                return new singletonProcess.Singleton('foo', {
+                    deleteLock: function (name, callback) {
+                        return callback(new Error("broken bad"));
+                    }
+                });
             };
 
             it("should fire 'releasing' and 'error' events ", function (done) {
-                var singleton = new singletonProcess.Singleton('foo', persister);
+                var singleton = singletonFactory();
 
                 var events = '';
-
-                singleton.on('locked', function () {
-                    singleton.release();
-                });
                 singleton.on('releasing', function () {
                     events += 'releasing';
                 });
@@ -453,7 +462,25 @@ describe("Singleton", function () {
                     done();
                 });
 
-                singleton.lock();
+                singleton.release();
+            });
+
+            it("should invoke the callback with the error", function (done) {
+                var singleton = singletonFactory();
+
+                singleton.release(function (err, success) {
+                    err.message.should.equal("broken bad");
+                    done();
+                });                      
+            });
+
+            it("should return a rejected promise", function (done) {
+                var singleton = singletonFactory();
+
+                singleton.release().then(null, function (err) {
+                    err.message.should.equal("broken bad");
+                    done();
+                });
             });
         });
     });
