@@ -1,4 +1,11 @@
 language: node_js
 node_js:
-  - "0.10"
+- '0.10'
 before_script: make jshint
+deploy:
+  provider: npm
+  email: peter@twistedstream.com
+  api_key:
+    secure: l2yoeQUCu6ZGVPQ8m9HaAjLqfezAUyfv2Mdqulr4XGiwavNhlUYL0cS45s+6wzrfIW0t/GnZwJJ1XZDV8M+pydgSTkSh9UfQZbRf6H+j6HNFVWtP+VW//GNmObfOP5HuitsE1/gl8hM2CGy/MFZ7yGtW4oNmOvn6LyPyKo+qtJ4=
+  on:
+    tags: true
