@@ -1,8 +1,12 @@
 # singleton-process
 
-Enforce a single instance of a node.js process across multiple hosts.
+Enforce a single instance of a node.js process across multiple hosts, using a binary [Semaphore](http://en.wikipedia.org/wiki/Semaphore_(programming))-style mechanism.
 
 [![Build Status](https://travis-ci.org/twistedstream/singleton-process.svg?branch=master)](https://travis-ci.org/twistedstream/singleton-process)
+
+Let's say you have some kind of background worker that performs a complex or time-consuming set of operations on shared data in a database.  And if another instance of your worker were to start working on the data while the first is still active, your data could get corrupted.  Perhaps you run your worker on a scheduled basis and occasionally a worker's execution can take longer than the duration between scheduled runs.  Or maybe you want multiple deployments of your worker for reliability purposes, but of course only want one of them to actually execute at a time.
+
+The **singleton-process** library provides a mechanism for a Node.js application to enforce a singleton instance by creating an atomic lock that all instances of your app check before executing a protected block of code.
 
 ## Installation
 
